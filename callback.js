@@ -1,5 +1,7 @@
 const clientId = "b27e90e779de42e8a80bee4e12c50c7d";
-const redirectUri = "http://127.0.0.1:5500/callback.html";
+const redirectUri = window.location.hostname === "127.0.0.1"
+    ? "http://127.0.0.1:5500/callback.html"
+    : "https://ramsasgit.github.io/gitar-app/callback.html";
 
 const statusText = document.getElementById("status");
 
