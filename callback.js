@@ -79,7 +79,7 @@ localStorage.setItem(
         history.replaceState(
             {},
             "",
-            "/callback.html"
+            window.location.pathname
         );
 
     } catch (error) {
