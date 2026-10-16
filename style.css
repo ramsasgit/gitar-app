@@ -1,0 +1,204 @@
+
+/* MODERNE GITAR-APP */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background: radial-gradient(
+        ellipse at top left,
+        #1c3030 0%,
+        #11151d 45%,
+        #0c0f14 100%
+    );
+    background-attachment: fixed;
+    color: #f5f7fa;
+    font-family: "Segoe UI", Arial, sans-serif;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 45px 30px;
+    line-height: 1.6;
+}
+
+h1 {
+    color: #48e58b;
+    font-size: 38px;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+}
+
+h2 {
+    font-size: 25px;
+    margin-top: 45px;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+}
+
+p {
+    color: #b6beca;
+    line-height: 1.7;
+}
+
+/* KNAPPER */
+
+button {
+    background: #1ed760;
+    color: #07130c;
+    border: none;
+    padding: 13px 22px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 14px;
+    transition: 0.2s ease;
+}
+
+button:hover {
+    background: #48f58a;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px #1ed76033;
+}
+
+/* SØKEFELT */
+
+#sok-lat {
+    background: #202630 !important;
+    color: white;
+    border: 1px solid #394350;
+    border-radius: 12px;
+    padding: 14px !important;
+    font-size: 14px;
+    max-width: 100%;
+}
+
+#sok-lat:focus {
+    outline: none;
+    border-color: #1ed760;
+    box-shadow: 0 0 0 3px #1ed76022;
+}
+
+/* FILTER */
+
+#filter-nivaa {
+    background: #202630;
+    color: white;
+    border: 1px solid #394350;
+    border-radius: 12px;
+    padding: 13px !important;
+    cursor: pointer;
+}
+
+/* SPOTIFY-STATUS */
+
+#spotify-status {
+    margin-top: 25px;
+    color: #dce3ec;
+}
+
+#spotify-status ol {
+    padding-left: 30px;
+}
+
+#spotify-status li {
+    background: #1b222c;
+    border: 1px solid #303946;
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    transition: 0.2s ease;
+}
+
+#spotify-status li:hover {
+    background: #252f3b;
+    border-color: #486050;
+}
+
+#spotify-status a {
+    color: #48e58b !important;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+#spotify-status a:hover {
+    text-decoration: underline;
+}
+
+#spotify-status select {
+    background: #303946;
+    color: white;
+    border: 1px solid #485365;
+    border-radius: 8px;
+    padding: 7px;
+    margin-top: 6px;
+}
+
+/* LÅTKORT */
+
+.song-card {
+    background: #1b222c;
+    border: 1px solid #303946;
+    padding: 24px;
+    margin-bottom: 14px;
+    border-radius: 18px;
+    transition: 0.2s ease;
+}
+
+.song-card:hover {
+    background: #252f3b;
+    transform: translateY(-2px);
+}
+
+.song-card h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 19px;
+}
+
+.song-card p {
+    color: #aeb8c5;
+}
+
+.song-card a {
+    display: inline-block;
+    color: #48e58b;
+    font-weight: 600;
+    text-decoration: none;
+    margin-top: 8px;
+}
+
+.song-card a:hover {
+    text-decoration: underline;
+}
+
+.song-card select {
+    background: #303946;
+    color: white;
+    border: 1px solid #485365;
+    border-radius: 8px;
+    padding: 7px;
+}
+
+/* MOBIL */
+
+@media (max-width: 600px) {
+    body {
+        padding: 20px 15px;
+    }
+
+    h1 {
+        font-size: 29px;
+    }
+
+    h2 {
+        font-size: 22px;
+    }
+
+    button {
+        margin-bottom: 8px;
+    }
+
+    #spotify-status li {
+        padding: 14px;
+    }
+}
