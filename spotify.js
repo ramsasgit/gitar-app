@@ -116,6 +116,24 @@ function readPlaylistCache() {
     return cache && Array.isArray(cache.songs) ? cache : null;
   } catch { return null; }
 }
+function showCacheStatus() {
+  let status = document.getElementById("playlist-cache-status");
+  if (!status) {
+    status = document.createElement("p");
+    status.id = "playlist-cache-status";
+    status.setAttribute("role", "status");
+    spotifyStatus.insertAdjacentElement("beforebegin", status);
+  }
+  const cache = readPlaylistCache();
+  if (!cache || !cache.songs.length) {
+    status.textContent = "Lokalt lagret: 0 låter. Ingen spilleliste lagret ennå.";
+  } else {
+    const count = cache.songs.length;
+    status.textContent = "Lokalt lagret: " + count + " låter. " +
+      (cache.complete === false ? "Innlasting ikke fullført – resten kan hentes senere." : "Hele spillelisten er lagret.");
+  }
+}
+showCacheStatus();
 function waitForSpotify(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -176,6 +194,7 @@ hentKnapp.addEventListener("click", async () => {
               }));
             } catch (storageError) { console.warn("Could not save playlist cache", storageError); }
             spotifyStatus.textContent = "Hentet " + freshSongs.length + " låter fra Borderline...";
+            showCacheStatus();
           }
           songs = [...freshSongs].reverse();
           fromCache = false;
@@ -189,6 +208,7 @@ hentKnapp.addEventListener("click", async () => {
         }
       }
     }
+    showCacheStatus();
     if (!songs) throw new Error("Ingen låter tilgjengelige.");
     spotifyStatus.textContent = "Found " + songs.length + " songs in Borderline!" +
       (fromCache ? (cache && cache.complete === false ? " (delvis lagret kopi – resten hentes ved neste forsøk)" : " (lagret kopi)") : "");
