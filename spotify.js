@@ -143,6 +143,8 @@ const filtrerteLatter = songs.filter(song => {
 for (const song of filtrerteLatter) {
     const row = document.createElement("li");
 
+    row.classList.add("song-card");
+
     const navn = document.createElement("span");
     navn.textContent = `${song.title} – ${song.artist} `;
 
