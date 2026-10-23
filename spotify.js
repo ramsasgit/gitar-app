@@ -52,6 +52,49 @@ spotifyButton.addEventListener("click", async () => {
 
 
 
+
+const practiceKey = "guitar-practice-songs";
+function getPracticeSongs() {
+  try { const value = JSON.parse(localStorage.getItem(practiceKey) || "[]"); return Array.isArray(value) ? value : []; }
+  catch { return []; }
+}
+function practiceId(song) { return song.title + "::" + song.artist; }
+function savePracticeSongs(songs) {
+  localStorage.setItem(practiceKey, JSON.stringify(songs));
+  renderPracticeSongs();
+}
+function renderPracticeSongs() {
+  const list = document.getElementById("song-list");
+  if (!list) return;
+  list.replaceChildren();
+  const songs = getPracticeSongs();
+  if (!songs.length) {
+    const p = document.createElement("p");
+    p.textContent = "No songs saved yet. Add songs from Borderline below.";
+    list.appendChild(p);
+  }
+  for (const song of songs) {
+    const card = document.createElement("div");
+    card.className = "song-card";
+    const name = document.createElement("strong");
+    name.textContent = song.title + " – " + song.artist;
+    const link = document.createElement("a");
+    link.href = "https://www.ultimate-guitar.com/search.php?search_type=title&value=" + encodeURIComponent(song.title + " " + song.artist + " chords");
+    link.textContent = "🎸 Find chords";
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.style.marginLeft = "12px";
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.textContent = "Remove";
+    remove.style.marginLeft = "12px";
+    remove.onclick = () => savePracticeSongs(getPracticeSongs().filter(item => practiceId(item) !== practiceId(song)));
+    card.append(name, link, remove);
+    list.appendChild(card);
+  }
+}
+renderPracticeSongs();
+
 const hentKnapp = document.getElementById("hent-spilleliste");
 const spotifyStatus = document.getElementById("spotify-status");
 
@@ -220,6 +263,23 @@ vanskelighet.addEventListener("change", () => {
 
 
 row.appendChild(vanskelighet);
+const practiceButton = document.createElement("button");
+practiceButton.type = "button";
+practiceButton.style.marginLeft = "12px";
+function updatePracticeButton() {
+  practiceButton.textContent = getPracticeSongs().some(item => practiceId(item) === practiceId(song)) ? "✓ In Learn" : "+ Add to Learn";
+}
+updatePracticeButton();
+practiceButton.onclick = () => {
+  const saved = getPracticeSongs();
+  if (saved.some(item => practiceId(item) === practiceId(song))) {
+    savePracticeSongs(saved.filter(item => practiceId(item) !== practiceId(song)));
+  } else {
+    savePracticeSongs([...saved, { title: song.title, artist: song.artist }]);
+  }
+  updatePracticeButton();
+};
+row.appendChild(practiceButton);
 
     songList.appendChild(row);
 }
