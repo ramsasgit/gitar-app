@@ -54,6 +54,49 @@ spotifyButton.addEventListener("click", async () => {
 
 
 const acousticIcon = "<svg class=\"acoustic-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 36 36\" role=\"img\" aria-label=\"Kassegitar\"><g transform=\"rotate(42 18 18)\"><path d=\"M15 3 Q18 1 21 3 L20.5 8 L20 20 Q25 21 25 27 Q25 34 18 34 Q11 34 11 27 Q11 21 16 20 L15.5 8 Z\" fill=\"#d99549\" stroke=\"#7b4928\" stroke-width=\"1.4\"/><path d=\"M16 3 L20 3 L20 20 L16 20 Z\" fill=\"#7b4928\"/><circle cx=\"18\" cy=\"25\" r=\"3.4\" fill=\"#38251d\"/><path d=\"M14 30 H22\" stroke=\"#523522\" stroke-width=\"2\"/><path d=\"M17 4 V30 M18 4 V30 M19 4 V30\" stroke=\"#f7e3bf\" stroke-width=\".45\"/><path d=\"M14 5 H22 M14 7 H22\" stroke=\"#f5cf93\" stroke-width=\".8\"/></g></svg>";
+function parsePastedChords(input) {
+  const found = [];
+  const valid = /^(?:[A-G](?:#|b)?(?:m|maj|min|dim|aug|sus|add|M)?[0-9]*(?:sus[24]|add[0-9]+|maj[0-9]+)?(?:\/[A-G](?:#|b)?)?)$/;
+  const add = value => { if (valid.test(value) && !found.includes(value)) found.push(value); };
+  // [Am]lyrics and [Chorus: Am] chord sheets
+  for (const match of input.matchAll(/\[([A-G](?:#|b)?[a-zA-Z0-9/#]*)\]/g)) add(match[1]);
+  for (const line of input.split(/\r?\n/)) {
+    const clean = line.replace(/\[[^\]]+\]/g, "").trim();
+    if (!clean) continue;
+    const parts = clean.split(/[\s,|]+/).filter(Boolean);
+    // Only parse whole lines of chords, never guess chords from lyric words.
+    if (parts.length && parts.length <= 24 && parts.every(part => valid.test(part))) parts.forEach(add);
+  }
+  return found;
+}
+function makeChordEditor(song) {
+  const details = document.createElement("details");
+  details.className = "chord-editor";
+  const summary = document.createElement("summary");
+  const saved = chordsForSong(song);
+  summary.textContent = saved.length ? "Akkorder: " + saved.join(", ") + " · Endre" : "+ Lim inn akkorder";
+  const textarea = document.createElement("textarea");
+  textarea.rows = 5;
+  textarea.placeholder = "Lim inn akkordlinjer, f.eks. Am  C  G  D, eller tekst med [Am] og [C].";
+  textarea.value = saved.join(" ");
+  textarea.setAttribute("aria-label", "Lim inn akkorder for " + song.title);
+  const result = document.createElement("p");
+  result.className = "chord-feedback";
+  const save = document.createElement("button");
+  save.type = "button";
+  save.textContent = "Finn og lagre akkorder";
+  save.onclick = () => {
+    const chords = parsePastedChords(textarea.value);
+    if (!chords.length) { result.textContent = "Fant ingen sikre akkorder. Lim inn akkordlinjer eller akkorder i hakeparenteser."; return; }
+    localStorage.setItem(chordStorageKey(song), chords.join(","));
+    summary.textContent = "Akkorder: " + chords.join(", ") + " · Endre";
+    result.textContent = chords.every(chord => allowedBeginnerChords.has(chord))
+      ? "✓ " + chords.join(", ") + " – passer dine ni nybegynnerakkorder."
+      : chords.join(", ") + " – inneholder også akkorder utenfor de ni nybegynnerakkordene.";
+  };
+  details.append(summary, textarea, save, result);
+  return details;
+}
 const practiceKey = "guitar-practice-songs";
 function getPracticeSongs() {
   try { const value = JSON.parse(localStorage.getItem(practiceKey) || "[]"); return Array.isArray(value) ? value : []; }
@@ -90,7 +133,7 @@ function renderPracticeSongs() {
     remove.textContent = "Remove";
     remove.style.marginLeft = "12px";
     remove.onclick = () => savePracticeSongs(getPracticeSongs().filter(item => practiceId(item) !== practiceId(song)));
-    card.append(name, link, remove);
+    card.append(name, link, remove, makeChordEditor(song));
     list.appendChild(card);
   }
 }
@@ -329,29 +372,7 @@ vanskelighet.addEventListener("change", () => {
 
 
 row.appendChild(vanskelighet);
-const chordDetails = document.createElement("details");
-chordDetails.style.display = "inline-block";
-chordDetails.style.marginLeft = "12px";
-const chordSummary = document.createElement("summary");
-chordSummary.textContent = akkorder.length ? "Akkorder: " + akkorder.join(", ") : "+ Legg inn akkorder";
-chordDetails.appendChild(chordSummary);
-const chordInput = document.createElement("input");
-chordInput.type = "text";
-chordInput.placeholder = "F.eks. G, C, D, Em";
-chordInput.value = akkorder.join(", ");
-chordInput.setAttribute("aria-label", "Akkorder for " + song.title);
-chordInput.style.margin = "8px";
-const saveChords = document.createElement("button");
-saveChords.type = "button";
-saveChords.textContent = "Lagre akkorder";
-saveChords.onclick = () => {
-  const values = [...new Set(chordInput.value.split(/[;,\s]+/).map(v => v.trim()).filter(Boolean))];
-  localStorage.setItem(chordStorageKey(song), values.join(","));
-  visLatter(sokefelt.value);
-};
-chordDetails.appendChild(chordInput);
-chordDetails.appendChild(saveChords);
-row.appendChild(chordDetails);
+row.appendChild(makeChordEditor(song));
 const practiceButton = document.createElement("button");
 practiceButton.type = "button";
 practiceButton.style.marginLeft = "12px";
