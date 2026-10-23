@@ -136,7 +136,7 @@ function renderPracticeSongs() {
     remove.textContent = "Remove";
     remove.style.marginLeft = "12px";
     remove.onclick = () => savePracticeSongs(getPracticeSongs().filter(item => practiceId(item) !== practiceId(song)));
-    card.append(name, link, remove, makeChordEditor(song));
+    card.append(name, link, remove, makeChordEditor(song), chordDiagrams(song));
     list.appendChild(card);
   }
 }
@@ -378,6 +378,7 @@ vanskelighet.addEventListener("change", () => {
 
 row.appendChild(vanskelighet);
 row.appendChild(makeChordEditor(song));
+row.appendChild(chordDiagrams(song));
 const practiceButton = document.createElement("button");
 practiceButton.type = "button";
 practiceButton.style.marginLeft = "12px";
