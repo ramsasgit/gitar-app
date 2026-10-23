@@ -99,6 +99,14 @@ renderPracticeSongs();
 const hentKnapp = document.getElementById("hent-spilleliste");
 const spotifyStatus = document.getElementById("spotify-status");
 
+const allowedBeginnerChords = new Set(["E","A","D","Am","C","F","Dm","G","Em"]);
+function chordStorageKey(song) { return "guitar-chords-v1:" + song.title + ":" + song.artist; }
+function chordsForSong(song) {
+  const saved = localStorage.getItem(chordStorageKey(song));
+  if (saved !== null) return saved ? saved.split(",") : [];
+  const title = song.title.replace(/\s*-\s*\d{4}\s+Remaster(?:ed)?(?:\s+Version)?.*$/i, "").trim();
+  return akkordData[title] || [];
+}
 const playlistCacheKey = "borderline-playlist-cache-v1";
 const playlistCacheHours = 12;
 let loadingPlaylist = false;
@@ -189,8 +197,8 @@ const filtrerteLatter = songs.filter(song => {
     const nivaa = localStorage.getItem(nokkel) || "";
 
     const originalTittel = song.title.replace(/\\s*-\\s*\\d{4}\\s+Remaster(?:ed)?(?:\\s+Version)?.*$/i, "").trim();
-    const kjenteAkkorder = akkordData[originalTittel];
-    const enkleAkkorder = kjenteAkkorder && beregnVanskelighet(kjenteAkkorder) === "enkel";
+    const kjenteAkkorder = chordsForSong(song);
+    const enkleAkkorder = kjenteAkkorder.length > 0 && kjenteAkkorder.every(chord => allowedBeginnerChords.has(chord));
     const passerNivaa = (valgtNivaa === "forslag" && (enkleAkkorder || nivaa === "enkel")) ||
         valgtNivaa === "alle" ||
         nivaa === valgtNivaa ||
@@ -204,7 +212,7 @@ if (valgtNivaa === "forslag") {
     const note = document.createElement("p");
     note.textContent = filtrerteLatter.length
       ? "Forslag basert på akkorder vi kjenner, eller låter du har merket som enkle. Dette er ikke en fullstendig analyse av Spotify-listen."
-      : "Ingen sikre forslag ennå. Vi har bare akkorddata for noen få låter. Merk gjerne låter som Easy etter at du har sjekket akkordene.";
+      : "Ingen sikre forslag ennå. Bruk «Legg inn akkorder» på låtene du kjenner, så kan appen foreslå dem når de bruker de ni valgte akkordene.";
     songList.appendChild(note);
 }
 for (const song of filtrerteLatter) {
@@ -241,9 +249,9 @@ const originalTittel = song.title
     .trim();
 
 
-const akkorder = akkordData[originalTittel];
+const akkorder = chordsForSong(song);
 
-if (akkorder) {
+if (akkorder.length) {
     const forslag = beregnVanskelighet(akkorder);
 
     const merke = document.createElement("span");
@@ -287,6 +295,29 @@ vanskelighet.addEventListener("change", () => {
 
 
 row.appendChild(vanskelighet);
+const chordDetails = document.createElement("details");
+chordDetails.style.display = "inline-block";
+chordDetails.style.marginLeft = "12px";
+const chordSummary = document.createElement("summary");
+chordSummary.textContent = akkorder.length ? "Akkorder: " + akkorder.join(", ") : "+ Legg inn akkorder";
+chordDetails.appendChild(chordSummary);
+const chordInput = document.createElement("input");
+chordInput.type = "text";
+chordInput.placeholder = "F.eks. G, C, D, Em";
+chordInput.value = akkorder.join(", ");
+chordInput.setAttribute("aria-label", "Akkorder for " + song.title);
+chordInput.style.margin = "8px";
+const saveChords = document.createElement("button");
+saveChords.type = "button";
+saveChords.textContent = "Lagre akkorder";
+saveChords.onclick = () => {
+  const values = [...new Set(chordInput.value.split(/[;,\s]+/).map(v => v.trim()).filter(Boolean))];
+  localStorage.setItem(chordStorageKey(song), values.join(","));
+  visLatter(sokefelt.value);
+};
+chordDetails.appendChild(chordInput);
+chordDetails.appendChild(saveChords);
+row.appendChild(chordDetails);
 const practiceButton = document.createElement("button");
 practiceButton.type = "button";
 practiceButton.style.marginLeft = "12px";
