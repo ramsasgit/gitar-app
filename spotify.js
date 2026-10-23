@@ -53,6 +53,7 @@ spotifyButton.addEventListener("click", async () => {
 
 
 
+const acousticIcon = "<svg class=\"acoustic-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 36 36\" role=\"img\" aria-label=\"Kassegitar\"><g transform=\"rotate(42 18 18)\"><path d=\"M15 3 Q18 1 21 3 L20.5 8 L20 20 Q25 21 25 27 Q25 34 18 34 Q11 34 11 27 Q11 21 16 20 L15.5 8 Z\" fill=\"#d99549\" stroke=\"#7b4928\" stroke-width=\"1.4\"/><path d=\"M16 3 L20 3 L20 20 L16 20 Z\" fill=\"#7b4928\"/><circle cx=\"18\" cy=\"25\" r=\"3.4\" fill=\"#38251d\"/><path d=\"M14 30 H22\" stroke=\"#523522\" stroke-width=\"2\"/><path d=\"M17 4 V30 M18 4 V30 M19 4 V30\" stroke=\"#f7e3bf\" stroke-width=\".45\"/><path d=\"M14 5 H22 M14 7 H22\" stroke=\"#f5cf93\" stroke-width=\".8\"/></g></svg>";
 const practiceKey = "guitar-practice-songs";
 function getPracticeSongs() {
   try { const value = JSON.parse(localStorage.getItem(practiceKey) || "[]"); return Array.isArray(value) ? value : []; }
@@ -80,7 +81,7 @@ function renderPracticeSongs() {
     name.textContent = song.title + " – " + song.artist;
     const link = document.createElement("a");
     link.href = "https://www.ultimate-guitar.com/search.php?search_type=title&value=" + encodeURIComponent(song.title + " " + song.artist + " chords");
-    link.textContent = "🎸 Find chords";
+    link.innerHTML = acousticIcon + " Find chords";
     link.target = "_blank";
     link.rel = "noopener noreferrer";
     link.style.marginLeft = "12px";
@@ -203,7 +204,7 @@ for (const song of filtrerteLatter) {
         + encodeURIComponent(sok);
 
     
-lenke.textContent = "🎸 Find chords";
+lenke.innerHTML = acousticIcon + " Find chords";
 
     lenke.target = "_blank";
     lenke.rel = "noopener noreferrer";
