@@ -9,7 +9,7 @@ const akkordData = {
 
 function beregnVanskelighet(akkorder) {
     const enkleAkkorder = [
-        "G", "C", "D", "Em", "Am", "E", "A", "Dm"
+        "E", "A", "D", "Am", "C", "F", "Dm", "G", "Em"
     ];
 
     const vanskeligeAkkorder = [
