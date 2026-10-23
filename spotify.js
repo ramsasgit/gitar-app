@@ -120,7 +120,7 @@ async function fetchSpotifyPage(url, token) {
     }
     const retryAfter = Number(response.headers.get("Retry-After"));
     const seconds = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 30 * (attempt + 1);
-    if (attempt === 2) throw new Error("Spotify begrenser antall forespørsler. Prøv igjen senere.");
+    if (attempt === 2) { const error = new Error("Spotify har midlertidig begrenset tilgangen fordi appen har sendt for mange forespørsler. Vent en stund før du prøver igjen. Øvelseslisten din er fortsatt tilgjengelig."); error.status = 429; throw error; }
     spotifyStatus.textContent = "Spotify ber oss vente " + Math.ceil(seconds) + " sekunder før vi fortsetter...";
     await waitForSpotify(Math.min(seconds, 120) * 1000);
   }
@@ -314,8 +314,11 @@ visLatter(sokefelt.value);
 
 
     } catch (error) {
-        spotifyStatus.textContent =
-            "Noe gikk galt: " + error.message;
+        spotifyStatus.textContent = error.status === 429
+            ? "⏳ Spotify er midlertidig opptatt. Du har ikke gjort noe galt. Vent litt før du prøver igjen. Låtene i Learn er fortsatt tilgjengelige."
+            : error.message === "Du må koble til Spotify først."
+              ? "Koble til Spotify for å hente Borderline. Låtene i Learn er fortsatt tilgjengelige."
+              : "Kunne ikke laste Borderline akkurat nå. " + error.message + " Learn-listen din er fortsatt tilgjengelig.";
     }
 });
 
