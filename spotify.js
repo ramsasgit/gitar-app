@@ -99,68 +99,77 @@ renderPracticeSongs();
 const hentKnapp = document.getElementById("hent-spilleliste");
 const spotifyStatus = document.getElementById("spotify-status");
 
+const playlistCacheKey = "borderline-playlist-cache-v1";
+const playlistCacheHours = 12;
+let loadingPlaylist = false;
+function readPlaylistCache() {
+  try {
+    const cache = JSON.parse(localStorage.getItem(playlistCacheKey) || "null");
+    return cache && Array.isArray(cache.songs) ? cache : null;
+  } catch { return null; }
+}
+function waitForSpotify(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+async function fetchSpotifyPage(url, token) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const response = await fetch(url, { headers: { Authorization: "Bearer " + token } });
+    if (response.status !== 429) {
+      if (!response.ok) throw new Error("Spotify svarte med feil " + response.status);
+      return response.json();
+    }
+    const retryAfter = Number(response.headers.get("Retry-After"));
+    const seconds = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 30 * (attempt + 1);
+    if (attempt === 2) throw new Error("Spotify begrenser antall forespørsler. Prøv igjen senere.");
+    spotifyStatus.textContent = "Spotify ber oss vente " + Math.ceil(seconds) + " sekunder før vi fortsetter...";
+    await waitForSpotify(Math.min(seconds, 120) * 1000);
+  }
+}
 hentKnapp.addEventListener("click", async () => {
-    
-let token = localStorage.getItem("spotify_access_token");
-
-const utlopstid = Number(
-    localStorage.getItem("spotify_token_expires") || 0
-);
-
-if (!token || Date.now() >= utlopstid - 60000) {
-    token = await fornySpotifyToken();
-}
-
-if (!token) {
-    spotifyStatus.textContent =
-        "Du må koble til Spotify først.";
-    return;
-}
-
-    spotifyStatus.textContent = "Henter låtene fra Borderline...";
-
-    const playlistId = "482R3Wqd7Z5g7uJZ1trjJk";
-    let url = `https://api.spotify.com/v1/playlists/${playlistId}/items?limit=50`;
-    const songs = [];
-
-    try {
-        while (url) {
-            const response = await fetch(url, {
-                headers: {
-                    Authorization: "Bearer " + token
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error("Spotify svarte med feil " + response.status);
+  if (loadingPlaylist) return;
+  loadingPlaylist = true;
+  hentKnapp.disabled = true;
+  const cache = readPlaylistCache();
+  let songs = cache ? cache.songs : null;
+  let fromCache = Boolean(songs);
+  try {
+    const cacheFresh = cache && Date.now() - cache.savedAt < playlistCacheHours * 60 * 60 * 1000;
+    if (!cacheFresh) {
+      let token = localStorage.getItem("spotify_access_token");
+      const expires = Number(localStorage.getItem("spotify_token_expires") || 0);
+      if (!token || Date.now() >= expires - 60000) token = await fornySpotifyToken();
+      if (!token) {
+        if (!songs) throw new Error("Du må koble til Spotify først.");
+      } else {
+        spotifyStatus.textContent = "Henter låtene fra Borderline...";
+        const playlistId = "482R3Wqd7Z5g7uJZ1trjJk";
+        let url = "https://api.spotify.com/v1/playlists/" + playlistId + "/items?limit=50";
+        const freshSongs = [];
+        try {
+          while (url) {
+            const data = await fetchSpotifyPage(url, token);
+            for (const entry of data.items || []) {
+              const song = entry.item || entry.track;
+              if (song && song.type === "track" && song.artists) {
+                freshSongs.push({ title: song.name, artist: song.artists.map(a => a.name).join(", ") });
+              }
             }
-
-            const data = await response.json();
-
-            for (const entry of data.items) {
-                const song = entry.item || entry.track;
-
-                if (song && song.type === "track") {
-                    songs.push({
-                        title: song.name,
-                        artist: song.artists.map(a => a.name).join(", ")
-                    });
-                }
-            }
-
             url = data.next;
+          }
+          freshSongs.reverse();
+          songs = freshSongs;
+          fromCache = false;
+          try { localStorage.setItem(playlistCacheKey, JSON.stringify({ savedAt: Date.now(), songs })); }
+          catch (storageError) { console.warn("Could not save playlist cache", storageError); }
+        } catch (fetchError) {
+          if (!songs) throw fetchError;
+          fromCache = true;
         }
-
-        
-// Spotify returns playlist entries in playlist order (oldest first here).
-// Reverse once so the most recently added tracks appear at the top.
-songs.reverse();
-
-spotifyStatus.textContent =
-    `Found ${songs.length} songs in Borderline!`;
-
-
-
+      }
+    }
+    if (!songs) throw new Error("Ingen låter tilgjengelige.");
+    spotifyStatus.textContent = "Found " + songs.length + " songs in Borderline!" +
+      (fromCache ? " (saved copy)" : "");
 const songList = document.createElement("ol");
 spotifyStatus.appendChild(songList);
 
