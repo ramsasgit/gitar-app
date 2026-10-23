@@ -206,3 +206,18 @@ button:hover {
     }
 }
 
+
+/* New acoustic-guitar hero, inspired by approved preview */
+body{max-width:1280px;padding:34px 30px}
+.hero{display:grid;grid-template-columns:minmax(210px,34%) minmax(0,1fr);align-items:center;gap:18px;min-height:380px;margin-bottom:20px}
+.hero-art{min-width:0;display:flex;justify-content:center;align-items:center}
+.hero-guitar{display:block;width:100%;max-width:390px;height:auto;filter:drop-shadow(0 16px 18px #0007)}
+.hero-content{min-width:0}
+.hero h1{font-size:clamp(32px,4.7vw,66px);line-height:1.08;letter-spacing:-2px;margin:0 0 16px;color:#48e58b}
+.hero-subtitle{font-size:clamp(19px,2.5vw,30px);margin:0 0 12px}
+.playlist-label{margin:0 0 24px;color:#9baeb9}
+.hero-controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.hero-controls button{white-space:nowrap}
+.hero-controls #sok-lat{width:260px;flex:1 1 200px;margin:0!important}
+.hero-controls #filter-nivaa{margin:0;min-height:46px}
+@media(max-width:720px){.hero{grid-template-columns:110px minmax(0,1fr);gap:12px;min-height:0}.hero h1{font-size:clamp(26px,5.5vw,40px);letter-spacing:-1px}.hero-subtitle{font-size:16px}.hero-controls{grid-column:1/-1}.hero-art{align-self:start}.hero-guitar{max-width:145px}.hero-content{display:contents}.hero-content h1,.hero-content .hero-subtitle,.hero-content .playlist-label{grid-column:2}.hero-content h1{align-self:end}.hero-content .hero-subtitle{margin:0}.hero-content .playlist-label{margin:0}.hero-controls{grid-column:1/-1}}
