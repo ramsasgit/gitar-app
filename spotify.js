@@ -151,6 +151,10 @@ if (!token) {
         }
 
         
+// Spotify returns playlist entries in playlist order (oldest first here).
+// Reverse once so the most recently added tracks appear at the top.
+songs.reverse();
+
 spotifyStatus.textContent =
     `Found ${songs.length} songs in Borderline!`;
 
