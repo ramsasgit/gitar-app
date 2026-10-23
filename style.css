@@ -202,3 +202,11 @@ button:hover {
         padding: 14px;
     }
 }
+
+/* LIKE STORE LÅTFELT */
+.song-card {
+    min-height: 190px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
