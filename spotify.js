@@ -461,7 +461,4 @@ async function fornySpotifyToken() {
 
 
 
-if (localStorage.getItem("spotify_access_token") ||
-    localStorage.getItem("spotify_refresh_token")) {
-    document.getElementById("hent-spilleliste").click();
-}
+// Spotify playlist loading is manual only; refreshing the page never contacts Spotify.
