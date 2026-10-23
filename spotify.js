@@ -188,7 +188,10 @@ const filtrerteLatter = songs.filter(song => {
     const nokkel = "nivaa_" + song.title + "_" + song.artist;
     const nivaa = localStorage.getItem(nokkel) || "";
 
-    const passerNivaa =
+    const originalTittel = song.title.replace(/\\s*-\\s*\\d{4}\\s+Remaster(?:ed)?(?:\\s+Version)?.*$/i, "").trim();
+    const kjenteAkkorder = akkordData[originalTittel];
+    const enkleAkkorder = kjenteAkkorder && beregnVanskelighet(kjenteAkkorder) === "enkel";
+    const passerNivaa = (valgtNivaa === "forslag" && (enkleAkkorder || nivaa === "enkel")) ||
         valgtNivaa === "alle" ||
         nivaa === valgtNivaa ||
         (valgtNivaa === "uten" && nivaa === "");
@@ -197,6 +200,13 @@ const filtrerteLatter = songs.filter(song => {
 });
 
 
+if (valgtNivaa === "forslag") {
+    const note = document.createElement("p");
+    note.textContent = filtrerteLatter.length
+      ? "Forslag basert på akkorder vi kjenner, eller låter du har merket som enkle. Dette er ikke en fullstendig analyse av Spotify-listen."
+      : "Ingen sikre forslag ennå. Vi har bare akkorddata for noen få låter. Merk gjerne låter som Easy etter at du har sjekket akkordene.";
+    songList.appendChild(note);
+}
 for (const song of filtrerteLatter) {
     const row = document.createElement("li");
 
