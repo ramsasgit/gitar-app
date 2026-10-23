@@ -93,6 +93,7 @@ function makeChordEditor(song) {
     result.textContent = chords.every(chord => allowedBeginnerChords.has(chord))
       ? "✓ " + chords.join(", ") + " – passer dine ni nybegynnerakkorder."
       : chords.join(", ") + " – inneholder også akkorder utenfor de ni nybegynnerakkordene.";
+    renderPracticeSongs();
   };
   details.append(summary, textarea, save, result);
   return details;
@@ -111,10 +112,12 @@ function renderPracticeSongs() {
   const list = document.getElementById("song-list");
   if (!list) return;
   list.replaceChildren();
-  const songs = getPracticeSongs();
+  const allSongs = getPracticeSongs();
+  const onlyBeginner = document.getElementById("learn-beginner-only")?.checked;
+  const songs = onlyBeginner ? allSongs.filter(song => isBeginnerSong(song)) : allSongs;
   if (!songs.length) {
     const p = document.createElement("p");
-    p.textContent = "No songs saved yet. Add songs from Borderline below.";
+    p.textContent = onlyBeginner ? "Ingen Learn-låter med bekreftede nybegynnerakkorder ennå. Lim inn akkorder på låtene dine og prøv igjen." : "Ingen lagrede låter ennå. Legg til låter fra Borderline.";
     list.appendChild(p);
   }
   for (const song of songs) {
@@ -137,12 +140,14 @@ function renderPracticeSongs() {
     list.appendChild(card);
   }
 }
+document.getElementById("learn-beginner-only")?.addEventListener("change", renderPracticeSongs);
 renderPracticeSongs();
 
 const hentKnapp = document.getElementById("hent-spilleliste");
 const spotifyStatus = document.getElementById("spotify-status");
 
 const allowedBeginnerChords = new Set(["E","A","D","Am","C","F","Dm","G","Em"]);
+function isBeginnerSong(song) { const chords = chordsForSong(song); return chords.length > 0 && chords.every(chord => allowedBeginnerChords.has(chord)); }
 function chordStorageKey(song) { return "guitar-chords-v1:" + song.title + ":" + song.artist; }
 function chordsForSong(song) {
   const saved = localStorage.getItem(chordStorageKey(song));
@@ -275,8 +280,8 @@ const filtrerteLatter = songs.filter(song => {
 
     const originalTittel = song.title.replace(/\\s*-\\s*\\d{4}\\s+Remaster(?:ed)?(?:\\s+Version)?.*$/i, "").trim();
     const kjenteAkkorder = chordsForSong(song);
-    const enkleAkkorder = kjenteAkkorder.length > 0 && kjenteAkkorder.every(chord => allowedBeginnerChords.has(chord));
-    const passerNivaa = (valgtNivaa === "forslag" && (enkleAkkorder || nivaa === "enkel")) ||
+    const enkleAkkorder = isBeginnerSong(song);
+    const passerNivaa = (valgtNivaa === "forslag" && enkleAkkorder) ||
         valgtNivaa === "alle" ||
         nivaa === valgtNivaa ||
         (valgtNivaa === "uten" && nivaa === "");
@@ -288,8 +293,8 @@ const filtrerteLatter = songs.filter(song => {
 if (valgtNivaa === "forslag") {
     const note = document.createElement("p");
     note.textContent = filtrerteLatter.length
-      ? "Forslag basert på akkorder vi kjenner, eller låter du har merket som enkle. Dette er ikke en fullstendig analyse av Spotify-listen."
-      : "Ingen sikre forslag ennå. Bruk «Legg inn akkorder» på låtene du kjenner, så kan appen foreslå dem når de bruker de ni valgte akkordene.";
+      ? "Disse låtene bruker bare dine ni akkorder, basert på akkordene som er registrert. Andre låter kan også passe, men er ikke undersøkt ennå."
+      : "Ingen låter med bekreftede nybegynnerakkorder ennå. Lim inn akkordene på en låt, så kan den komme med her.";
     songList.appendChild(note);
 }
 for (const song of filtrerteLatter) {
