@@ -138,10 +138,10 @@ hentKnapp.addEventListener("click", async () => {
   loadingPlaylist = true;
   hentKnapp.disabled = true;
   const cache = readPlaylistCache();
-  let songs = cache ? cache.songs : null;
+  let songs = cache ? (cache.complete === false ? [...cache.songs].reverse() : cache.songs) : null;
   let fromCache = Boolean(songs);
   try {
-    const cacheFresh = cache && Date.now() - cache.savedAt < playlistCacheHours * 60 * 60 * 1000;
+    const cacheFresh = cache && cache.complete !== false && Date.now() - cache.savedAt < playlistCacheHours * 60 * 60 * 1000;
     if (!cacheFresh) {
       let token = localStorage.getItem("spotify_access_token");
       const expires = Number(localStorage.getItem("spotify_token_expires") || 0);
@@ -151,8 +151,11 @@ hentKnapp.addEventListener("click", async () => {
       } else {
         spotifyStatus.textContent = "Henter låtene fra Borderline...";
         const playlistId = "482R3Wqd7Z5g7uJZ1trjJk";
-        let url = "https://api.spotify.com/v1/playlists/" + playlistId + "/items?limit=50";
-        const freshSongs = [];
+        const baseUrl = "https://api.spotify.com/v1/playlists/" + playlistId + "/items?limit=50";
+        // Partial caches retain Spotify's original page order, so downloads can resume.
+        const partial = cache && cache.complete === false && typeof cache.nextUrl === "string" ? cache : null;
+        let url = partial ? partial.nextUrl : baseUrl;
+        const freshSongs = partial ? [...partial.songs] : [];
         try {
           while (url) {
             const data = await fetchSpotifyPage(url, token);
@@ -162,22 +165,33 @@ hentKnapp.addEventListener("click", async () => {
                 freshSongs.push({ title: song.name, artist: song.artists.map(a => a.name).join(", ") });
               }
             }
-            url = data.next;
+            url = data.next || null;
+            // Save after every successful page, including the URL to resume from.
+            try {
+              localStorage.setItem(playlistCacheKey, JSON.stringify({
+                savedAt: Date.now(),
+                songs: url ? freshSongs : [...freshSongs].reverse(),
+                nextUrl: url,
+                complete: !url
+              }));
+            } catch (storageError) { console.warn("Could not save playlist cache", storageError); }
+            spotifyStatus.textContent = "Hentet " + freshSongs.length + " låter fra Borderline...";
           }
-          freshSongs.reverse();
-          songs = freshSongs;
+          songs = [...freshSongs].reverse();
           fromCache = false;
-          try { localStorage.setItem(playlistCacheKey, JSON.stringify({ savedAt: Date.now(), songs })); }
-          catch (storageError) { console.warn("Could not save playlist cache", storageError); }
         } catch (fetchError) {
-          if (!songs) throw fetchError;
-          fromCache = true;
+          if (freshSongs.length) {
+            songs = [...freshSongs].reverse();
+            fromCache = true;
+          } else if (!songs) {
+            throw fetchError;
+          }
         }
       }
     }
     if (!songs) throw new Error("Ingen låter tilgjengelige.");
     spotifyStatus.textContent = "Found " + songs.length + " songs in Borderline!" +
-      (fromCache ? " (saved copy)" : "");
+      (fromCache ? (cache && cache.complete === false ? " (delvis lagret kopi – resten hentes ved neste forsøk)" : " (lagret kopi)") : "");
 const songList = document.createElement("ol");
 spotifyStatus.appendChild(songList);
 
