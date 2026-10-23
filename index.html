@@ -14,8 +14,9 @@
 
 
 
-<button id="spotify-login">Connect to Spotify</button>
-<button id="hent-spilleliste">Load playlist</button>
+<button id="spotify-login">Koble til egen Spotify (valgfritt)</button>
+<button id="hent-spilleliste">Hent Borderline fra Spotify</button>
+<button id="export-playlist" type="button">Eksporter lagret sangliste</button>
 
 
 <input
@@ -46,6 +47,9 @@
 <p>Save songs from Borderline here to practice.</p>
 
 <div id="song-list"></div>
+<h2>Åpne låter – uten innlogging</h2>
+<p>Prøv søk, akkorder og instrumentvalg uten Spotify. Foreløpig er dette tre eksempellåter; hele Borderline-listen må importeres separat.</p>
+<div id="public-songs"></div>
 
 <p id="spotify-status"></p>
 
@@ -60,5 +64,6 @@
 <script src="akkorder.js"></script>
 <script src="diagrammer.js"></script>
 <script src="spotify.js"></script>
+<script src="public-songs.js"></script>
 </body>
 </html>
