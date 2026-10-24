@@ -217,7 +217,7 @@ hentKnapp.addEventListener("click", async () => {
       } else {
         spotifyStatus.textContent = "Henter låtene fra Borderline...";
         const playlistId = "482R3Wqd7Z5g7uJZ1trjJk";
-        const baseUrl = "https://api.spotify.com/v1/playlists/" + playlistId + "/items?limit=50";
+        const baseUrl = "https://api.spotify.com/v1/playlists/" + playlistId + "/items?limit=10";
         // Partial caches retain Spotify's original page order, so downloads can resume.
         const partial = cache && cache.complete === false && typeof cache.nextUrl === "string" ? cache : null;
         let url = partial ? partial.nextUrl : baseUrl;
@@ -243,10 +243,12 @@ hentKnapp.addEventListener("click", async () => {
             } catch (storageError) { console.warn("Could not save playlist cache", storageError); }
             spotifyStatus.textContent = "Hentet " + freshSongs.length + " låter fra Borderline...";
             showCacheStatus();
+            if (url) await waitForSpotify(1200);
           }
           songs = [...freshSongs].reverse();
           fromCache = false;
         } catch (fetchError) {
+          if (fetchError.status === 429) spotifyStatus.textContent = fetchError.message;
           if (freshSongs.length) {
             songs = [...freshSongs].reverse();
             fromCache = true;
