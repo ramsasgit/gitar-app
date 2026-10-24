@@ -192,10 +192,13 @@ async function fetchSpotifyPage(url, token) {
       if (!response.ok) throw new Error("Spotify svarte med feil " + response.status);
       return response.json();
     }
+    let details = "";
+    try { const body = await response.clone().json(); details = [body.error?.reason, body.error?.message, body.message].filter(Boolean).join(" – "); } catch {}
+    console.warn("Spotify HTTP 429", { retryAfter: response.headers.get("Retry-After"), details });
     const retryAfter = Number(response.headers.get("Retry-After"));
     const seconds = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 30 * (attempt + 1);
-    if (attempt === 2) { const error = new Error("Spotify har midlertidig begrenset tilgangen fordi appen har sendt for mange forespørsler. Vent en stund før du prøver igjen. Øvelseslisten din er fortsatt tilgjengelig."); error.status = 429; throw error; }
-    spotifyStatus.textContent = "Spotify ber oss vente " + Math.ceil(seconds) + " sekunder før vi fortsetter...";
+    if (attempt === 2) { const error = new Error("Spotify avviser forespørselen (429). " + (details || "Ingen detaljert årsak oppgitt.") + " Se også utviklerkonsollen for Retry-After."); error.status = 429; throw error; }
+    spotifyStatus.textContent = "Spotify svarer 429" + (details ? " (" + details + ")" : "") + ". Venter " + Math.ceil(seconds) + " sekunder før nytt forsøk...";
     await waitForSpotify(Math.min(seconds, 120) * 1000);
   }
 }
@@ -252,6 +255,7 @@ hentKnapp.addEventListener("click", async () => {
           if (freshSongs.length) {
             songs = [...freshSongs].reverse();
             fromCache = true;
+            spotifyStatus.textContent = fetchError.message + " Viser lagrede låter.";
           } else if (!songs) {
             throw fetchError;
           }
@@ -419,7 +423,7 @@ visLatter(sokefelt.value);
 
     } catch (error) {
         spotifyStatus.textContent = error.status === 429
-            ? "⏳ Spotify er midlertidig opptatt. Du har ikke gjort noe galt. Vent litt før du prøver igjen. Låtene i Learn er fortsatt tilgjengelige."
+            ? "⏳ " + error.message + " Låtene i Learn er fortsatt tilgjengelige."
             : error.message === "Du må koble til Spotify først."
               ? "Koble til Spotify for å hente Borderline. Låtene i Learn er fortsatt tilgjengelige."
               : "Kunne ikke laste Borderline akkurat nå. " + error.message + " Learn-listen din er fortsatt tilgjengelig.";
