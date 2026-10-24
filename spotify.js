@@ -481,29 +481,46 @@ const importButton = document.getElementById("import-playlist");
 const importFile = document.getElementById("import-playlist-file");
 function parsePlaylistCsv(text) {
   text = text.replace(/^\uFEFF/, "");
-  const rows = [];
-  let row = [], cell = "", quoted = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (c === '"') {
-      if (quoted && text[i + 1] === '"') { cell += '"'; i++; }
-      else quoted = !quoted;
-    } else if (c === "," && !quoted) { row.push(cell); cell = ""; }
-    else if ((c === "\n" || c === "\r") && !quoted) {
-      if (c === "\r" && text[i + 1] === "\n") i++;
-      row.push(cell); if (row.some(value => value.trim())) rows.push(row);
-      row = []; cell = "";
-    } else cell += c;
+  function readRows(delimiter) {
+    const rows = [];
+    let row = [], cell = "", quoted = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (c === '"') {
+        if (quoted && text[i + 1] === '"') { cell += '"'; i++; }
+        else quoted = !quoted;
+      } else if (c === delimiter && !quoted) { row.push(cell); cell = ""; }
+      else if ((c === "\n" || c === "\r") && !quoted) {
+        if (c === "\r" && text[i + 1] === "\n") i++;
+        row.push(cell); if (row.some(v => v.trim())) rows.push(row);
+        row = []; cell = "";
+      } else cell += c;
+    }
+    if (quoted) throw new Error("CSV-filen har et uavsluttet anførselstegn.");
+    row.push(cell); if (row.some(v => v.trim())) rows.push(row);
+    return rows;
   }
-  if (quoted) throw new Error("CSV-filen har et uavsluttet anførselstegn.");
-  row.push(cell); if (row.some(value => value.trim())) rows.push(row);
-  if (!rows.length) throw new Error("CSV-filen er tom.");
-  const normalize = value => value.trim().toLowerCase().replace(/[ _-]/g, "");
-  const headers = rows.shift().map(normalize);
-  const titleCol = headers.findIndex(h => ["trackname","tracktitle","title","name","song"].includes(h));
-  const artistCol = headers.findIndex(h => ["artistname","artistnames","artist","artists"].includes(h));
-  if (titleCol < 0 || artistCol < 0)
-    throw new Error("Fant ikke kolonnene for sangtittel og artist. Bruk en CSV fra Exportify med Track Name og Artist Name.");
+  const normalize = value => value.replace(/^\uFEFF/, "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+  function columns(headers) {
+    const names = headers.map(normalize);
+    const title = names.findIndex(h => ["trackname","tracktitle","title","name","song","songname","track"].includes(h));
+    const artist = names.findIndex(h => ["artistname","artistnames","artist","artists","artistss"].includes(h) || /^artistnames?/.test(h));
+    return { title, artist };
+  }
+  let rows, titleCol = -1, artistCol = -1;
+  for (const delimiter of [",", ";", "\t"]) {
+    const candidate = readRows(delimiter);
+    if (!candidate.length) continue;
+    const found = columns(candidate[0]);
+    if (found.title >= 0 && found.artist >= 0) {
+      rows = candidate; titleCol = found.title; artistCol = found.artist; break;
+    }
+  }
+  if (!rows) {
+    const firstLine = text.split(/\r?\n/, 1)[0].slice(0, 200);
+    throw new Error("Fant ikke kolonner for sang og artist. Første linje i filen: " + firstLine);
+  }
+  rows.shift();
   const songs = [], seen = new Set();
   for (const fields of rows) {
     const title = (fields[titleCol] || "").trim();
