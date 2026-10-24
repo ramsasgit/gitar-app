@@ -474,3 +474,64 @@ async function fornySpotifyToken() {
 
 
 // Spotify playlist loading is manual only; refreshing the page never contacts Spotify.
+
+
+// Import a Spotify/Exportify CSV without making any Spotify API requests.
+const importButton = document.getElementById("import-playlist");
+const importFile = document.getElementById("import-playlist-file");
+function parsePlaylistCsv(text) {
+  text = text.replace(/^\uFEFF/, "");
+  const rows = [];
+  let row = [], cell = "", quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '"') {
+      if (quoted && text[i + 1] === '"') { cell += '"'; i++; }
+      else quoted = !quoted;
+    } else if (c === "," && !quoted) { row.push(cell); cell = ""; }
+    else if ((c === "\n" || c === "\r") && !quoted) {
+      if (c === "\r" && text[i + 1] === "\n") i++;
+      row.push(cell); if (row.some(value => value.trim())) rows.push(row);
+      row = []; cell = "";
+    } else cell += c;
+  }
+  if (quoted) throw new Error("CSV-filen har et uavsluttet anførselstegn.");
+  row.push(cell); if (row.some(value => value.trim())) rows.push(row);
+  if (!rows.length) throw new Error("CSV-filen er tom.");
+  const normalize = value => value.trim().toLowerCase().replace(/[ _-]/g, "");
+  const headers = rows.shift().map(normalize);
+  const titleCol = headers.findIndex(h => ["trackname","tracktitle","title","name","song"].includes(h));
+  const artistCol = headers.findIndex(h => ["artistname","artistnames","artist","artists"].includes(h));
+  if (titleCol < 0 || artistCol < 0)
+    throw new Error("Fant ikke kolonnene for sangtittel og artist. Bruk en CSV fra Exportify med Track Name og Artist Name.");
+  const songs = [], seen = new Set();
+  for (const fields of rows) {
+    const title = (fields[titleCol] || "").trim();
+    const artist = (fields[artistCol] || "").trim();
+    if (!title || !artist) continue;
+    const key = (title + "::" + artist).normalize("NFKC").toLocaleLowerCase();
+    if (!seen.has(key)) { seen.add(key); songs.push({ title, artist }); }
+  }
+  if (!songs.length) throw new Error("Fant ingen låter i CSV-filen.");
+  return { songs, duplicates: rows.length - songs.length };
+}
+importButton?.addEventListener("click", () => importFile.click());
+importFile?.addEventListener("change", async () => {
+  const file = importFile.files?.[0];
+  if (!file) return;
+  try {
+    const parsed = parsePlaylistCsv(await file.text());
+    const existing = readPlaylistCache()?.songs || [];
+    const existingIds = new Set(existing.map(song => (song.title + "::" + song.artist).normalize("NFKC").toLocaleLowerCase()));
+    const added = parsed.songs.filter(song => !existingIds.has((song.title + "::" + song.artist).normalize("NFKC").toLocaleLowerCase())).length;
+    // Preserve the CSV's order, with newest playlist items displayed first.
+    localStorage.setItem(playlistCacheKey, JSON.stringify({
+      songs: parsed.songs, savedAt: Date.now(), complete: true, nextUrl: null, source: "csv"
+    }));
+    showCacheStatus();
+    hentKnapp.click(); // Uses the fresh local cache; no Spotify request.
+    spotifyStatus.insertAdjacentText("afterbegin", "Importert " + parsed.songs.length + " unike låter fra CSV (" + added + " nye, " + parsed.duplicates + " duplikater fjernet). ");
+  } catch (error) {
+    spotifyStatus.textContent = "Kunne ikke importere CSV: " + error.message;
+  } finally { importFile.value = ""; }
+});
