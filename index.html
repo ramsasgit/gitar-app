@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chords from Spotify</title>
 <link rel="stylesheet" href="style.css">
-<style>.acoustic-icon{width:1.25em;height:1.25em;vertical-align:-.12em;display:inline-block;flex-shrink:0} .chord-editor{margin:12px 0;max-width:600px}.chord-editor summary{cursor:pointer;color:#33d884}.chord-editor textarea{display:block;box-sizing:border-box;width:100%;margin:10px 0;padding:10px;border:1px solid #67707d;border-radius:8px;background:#202833;color:white}.chord-feedback{font-size:.9em}</style>
+<style>.acoustic-icon{width:1.25em;height:1.25em;vertical-align:-.12em;display:inline-block;flex-shrink:0} .chord-editor{margin:12px 0;max-width:600px}.chord-editor summary{cursor:pointer;color:#33d884}.chord-editor textarea{display:block;box-sizing:border-box;width:100%;margin:10px 0;padding:10px;border:1px solid #67707d;border-radius:8px;background:#202833;color:white}.chord-feedback{font-size:.9em} .action-dropdown{position:relative;width:100%;max-width:360px}.action-dropdown summary{list-style:none;cursor:pointer;background:#1ed760;color:#07130c;padding:13px 18px;border-radius:12px;font-weight:700}.action-dropdown summary::-webkit-details-marker{display:none}.action-dropdown summary span{float:right}.action-dropdown-items{display:flex;flex-direction:column;gap:8px;margin-top:8px;padding:12px;background:#202630;border:1px solid #394350;border-radius:12px}.action-dropdown-items button{width:100%;white-space:normal;text-align:left}.action-dropdown-items input[hidden]{display:none} </style>
 </head>
 <body>
     
@@ -14,6 +14,7 @@
 
 
 
+<details class="action-dropdown"><summary>What do you want to do? <span aria-hidden="true">▾</span></summary><div class="action-dropdown-items">
 <button id="spotify-login">Koble til egen Spotify (valgfritt)</button>
 <button id="hent-spilleliste">Hent Borderline fra Spotify</button>
 <button id="import-playlist" type="button">Importer Spotify-spilleliste (CSV)</button>
@@ -21,6 +22,7 @@
 <button id="export-playlist" type="button">Eksporter lagret sangliste</button>
 
 
+</div></details>
 <input
     type="text"
     id="sok-lat"
