@@ -3,7 +3,7 @@ const cacheKey="borderline-playlist-cache-v1",practiceKey="guitar-practice-songs
 const $=id=>document.getElementById(id);
 const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key)||"null")??fallback}catch{return fallback}};
 const cache=read(cacheKey,null);
-const songs=cache?.songs?.length?(cache.complete===false?[...cache.songs].reverse():cache.songs):[];
+let songs=cache?.songs?.length?(cache.complete===false?[...cache.songs].reverse():cache.songs):[];
 const practice=()=>read(practiceKey,[]);
 const songId=s=>s.title+"::"+s.artist;
 const selected={song:null,tab:"songs",origin:"songs"};
@@ -26,3 +26,17 @@ $("import-csv").onclick=()=>$("csv-file").click();
 $("csv-file").onchange=async e=>{const file=e.target.files[0];if(!file)return;const text=await file.text();const lines=text.replace(/^\uFEFF/,"").split(/\r?\n/);const sep=lines[0].includes("\t")?"\t":lines[0].includes(";")?";":",";const headers=lines.shift().split(sep).map(x=>x.replace(/"/g,"").trim().toLowerCase());const t=headers.findIndex(x=>["track name","trackname","title","name"].includes(x));const a=headers.findIndex(x=>["artist name","artistname","artist","artist names"].includes(x));if(t<0||a<0){alert("Finner ikke kolonnene for sang og artist. Bruk en Spotify CSV-eksport.");return}const imported=lines.map(line=>line.split(sep)).filter(row=>row[t]&&row[a]).map(row=>({title:row[t].replace(/^"|"$/g,""),artist:row[a].replace(/^"|"$/g,"")}));if(!imported.length){alert("Ingen låter funnet.");return}localStorage.setItem(cacheKey,JSON.stringify({songs:imported,savedAt:Date.now(),complete:true,source:"csv"}));alert("Importerte "+imported.length+" låter. Siden oppdateres.");location.reload()};
 $("export-json").onclick=()=>{if(!songs.length){alert("Ingen låter å eksportere.");return}const blob=new Blob([JSON.stringify({songs,complete:true},null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="borderline-sangliste.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 renderSongs();
+// Shared public playlist: no Spotify login or API requests required.
+(async function loadPublicPlaylist(){
+ try {
+  const response=await fetch("./borderline-sangliste.json",{cache:"no-cache"});
+  if(!response.ok)throw new Error("HTTP "+response.status);
+  const data=await response.json();
+  if(!Array.isArray(data.songs)||!data.songs.length)throw new Error("Ugyldig sangliste");
+  songs=data.songs.filter(s=>typeof s.title==="string"&&typeof s.artist==="string");
+  renderSongs();
+  if(selected.tab==="settings")$("data-status").textContent=songs.length+" sanger i den delte Borderline-listen (ingen Spotify-innlogging).";
+ }catch(error){
+  console.info("Felles sangliste er ikke publisert ennå; bruker lokal kopi.",error);
+ }
+})();
