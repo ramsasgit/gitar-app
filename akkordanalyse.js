@@ -9,4 +9,36 @@ function analyze(data,sr){const size=8192,hop=Math.round(sr*.35),chromas=[];for(
 const raw=chromas.map(ch=>{if(!ch)return null;let best=null,score=-Infinity;for(const t of templates){let inside=0,outside=0;for(let i=0;i<12;i++)(t.mask[i]?inside+=ch[i]:outside+=ch[i]);const s=inside/3-outside/9;if(s>score){score=s;best=t.name}}return best});
 const smooth=raw.map((v,i)=>{const votes=new Map();for(let j=Math.max(0,i-2);j<=Math.min(raw.length-1,i+2);j++){const k=raw[j];if(k)votes.set(k,(votes.get(k)||0)+1)}return [...votes].sort((a,b)=>b[1]-a[1])[0]?.[0]||null});
 const events=[];for(let i=0;i<smooth.length;i++){const name=smooth[i];if(!name)continue;if(events.length&&events[events.length-1].name===name){events[events.length-1].end=(i+1)*hop/sr}else events.push({name,start:i*hop/sr,end:(i+1)*hop/sr})}return events.filter(e=>e.end-e.start>=.55)}
-btn.onclick=async()=>{btn.disabled=true;results.hidden=true;status.textContent="Leser og analyserer lydfilen …";try{const audioContext=new (window.AudioContext||window.webkitAudioContext)();const buffer=await audioContext.decodeAudioData(await file.files[0].arrayBuffer());const maxSeconds=180,limit=Math.min(buffer.length,Math.floor(buffer.sampleRate*maxSeconds));const mono=new Float32Array(limit);for(let c=0;c<buffer.numberOfChannels;c++){const channel=buffer.getChannelData(c);for(let i=0;i<limit;i++)mono[i]+=channel[i]/buffer.numberOfChannels}const events=analyze(mono,buffer.sampleRate);await audioContext.close();const host=$("events");host.replaceChildren();for(const e of events){const row=document.createElement("div");row.className="event";const time=document.createElement("time");time.textContent=e.start.toFixed(1)+"–"+e.end.toFixed(1)+" s";const name=document.createElement("strong");name.textContent=e.name;row.append(time,name);host.append(row)}const unique=[...new Set(events.map(e=>e.name))];$("summary").textContent=events.length?"Fant "+events.length+" segmenter. Akkorder: "+unique.join(", "):"Ingen tydelige akkorder funnet.";status.textContent="Analyse ferdig"+(buffer.duration>maxSeconds?" (kun første 3 minutter).":".");results.hidden=false}catch(err){status.textContent="Kunne ikke analysere filen: "+err.message}finally{btn.disabled=!file.files.length}};})();
+btn.onclick=async()=>{btn.disabled=true;results.hidden=true;status.textContent="Leser og analyserer lydfilen …";try{const audioContext=new (window.AudioContext||window.webkitAudioContext)();const buffer=await audioContext.decodeAudioData(await file.files[0].arrayBuffer());const maxSeconds=180,limit=Math.min(buffer.length,Math.floor(buffer.sampleRate*maxSeconds));const mono=new Float32Array(limit);for(let c=0;c<buffer.numberOfChannels;c++){const channel=buffer.getChannelData(c);for(let i=0;i<limit;i++)mono[i]+=channel[i]/buffer.numberOfChannels}const events=analyze(mono,buffer.sampleRate);await audioContext.close();const host=$("events");host.replaceChildren();for(const e of events){const row=document.createElement("div");row.className="event";const time=document.createElement("time");time.textContent=e.start.toFixed(1)+"–"+e.end.toFixed(1)+" s";const name=document.createElement("strong");name.textContent=e.name;row.append(time,name);host.append(row)}const unique=[...new Set(events.map(e=>e.name))];$("summary").textContent=events.length?"Fant "+events.length+" segmenter. Akkorder: "+unique.join(", "):"Ingen tydelige akkorder funnet.";status.textContent="Analyse ferdig"+(buffer.duration>maxSeconds?" (kun første 3 minutter).":".");results.hidden=false}catch(err){status.textContent="Kunne ikke analysere filen: "+err.message}finally{btn.disabled=!file.files.length}};
+let micStream=null,micContext=null,micSource=null,micProcessor=null,micTimer=null;
+const micStart=$("mic-start"),micStop=$("mic-stop"),micStatus=$("mic-status"),micCurrent=$("mic-current"),micFound=$("mic-found");
+let micSeen=new Map(),micHistory=[];
+micStart.onclick=async()=>{
+try{
+if(!navigator.mediaDevices?.getUserMedia)throw Error("Mikrofon krever HTTPS og en nettleser som støtter opptak.");
+micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+micContext=new (window.AudioContext||window.webkitAudioContext)();
+await micContext.resume();
+micSource=micContext.createMediaStreamSource(micStream);
+micProcessor=micContext.createAnalyser();micProcessor.fftSize=8192;micProcessor.smoothingTimeConstant=.65;
+micSource.connect(micProcessor);
+micSeen=new Map();micHistory=[];micStart.disabled=true;micStop.disabled=false;micStatus.textContent="Lytter … spill en akkord i noen sekunder.";
+const samples=new Float32Array(micProcessor.fftSize);
+micTimer=setInterval(()=>{
+if(!micProcessor)return;
+micProcessor.getFloatTimeDomainData(samples);
+const energy=samples.reduce((s,v)=>s+v*v,0)/samples.length;
+if(energy<.000008){micCurrent.textContent="Akkord: – (venter på lyd)";micHistory=[];return}
+const found=analyze(samples,micContext.sampleRate);
+const chord=found.length?found.reduce((best,e)=>!best||e.end-e.start>best.end-best.start?e:best,null).name:null;
+if(!chord)return;
+micHistory.push(chord);if(micHistory.length>6)micHistory.shift();
+const counts=new Map();for(const c of micHistory)counts.set(c,(counts.get(c)||0)+1);
+const winner=[...counts].sort((x,y)=>y[1]-x[1])[0];
+if(winner&&winner[1]>=3){micCurrent.textContent="Mulig akkord: "+winner[0];micSeen.set(winner[0],(micSeen.get(winner[0])||0)+1);micFound.textContent="Oppdagede akkorder: "+[...micSeen.keys()].join(", ")}
+},650);
+}catch(e){micStatus.textContent="Kunne ikke starte mikrofonen: "+e.message;micStream?.getTracks().forEach(t=>t.stop());micStream=null;micContext?.close();micContext=null}
+};
+micStop.onclick=()=>{clearInterval(micTimer);micTimer=null;micSource?.disconnect();micProcessor?.disconnect();micStream?.getTracks().forEach(t=>t.stop());micContext?.close();micStream=null;micSource=null;micProcessor=null;micContext=null;micStart.disabled=false;micStop.disabled=true;micStatus.textContent="Mikrofonen er stoppet.";};
+window.addEventListener("pagehide",()=>{if(micStream)micStop.click()});
+})();
