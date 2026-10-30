@@ -34,7 +34,7 @@ const rms=Math.sqrt(energy);const level=Math.min(100,Math.round(rms*2500));micMe
 if(micContext.state!=="running"){micStatus.textContent="Lydmotoren er "+micContext.state+". Trykk Stopp og Start igjen.";return}
 if(micStream.getAudioTracks()[0]?.muted){micStatus.textContent="Mikrofonsporet er dempet av nettleseren eller operativsystemet.";return}
 micStatus.textContent=rms<.0005?"Mikrofon tilkoblet, men nesten ingen lyd registreres. Sjekk valgt mikrofon i Chrome.":"Mikrofonen mottar lyd – analyserer akkorder.";
-if(energy<.00000025){micCurrent.textContent="Akkord: – (venter på lyd)";micHistory=[];micCandidate=null;micCandidateCount=0;return}
+if(energy<.00000025){micCurrent.textContent="Akkord: – (venter på lyd)";micHistory=[];micCandidate=null;micCandidateCount=0;micConfirmed=null;return}
 const re=new Float64Array(samples.length),im=new Float64Array(samples.length),chroma=new Float64Array(12);
 for(let i=0;i<samples.length;i++)re[i]=samples[i]*(.5-.5*Math.cos(2*Math.PI*i/(samples.length-1)));
 fft(re,im);
@@ -44,11 +44,11 @@ chroma[pc]+=Math.pow(Math.hypot(re[k],im[k]),.7);
 }
 const total=chroma.reduce((a,b)=>a+b,0);if(!total)return;
 for(let i=0;i<12;i++)chroma[i]/=total;
-let chord=null,bestScore=-Infinity;
-for(const t of templates){let inside=0,outside=0;for(let i=0;i<12;i++)(t.mask[i]?inside+=chroma[i]:outside+=chroma[i]);const score=inside/3-outside/9;if(score>bestScore){bestScore=score;chord=t.name}}
-if(!chord)return;
+let chord=null,bestScore=-Infinity,secondScore=-Infinity;
+for(const t of templates){let inside=0,outside=0;for(let i=0;i<12;i++)(t.mask[i]?inside+=chroma[i]:outside+=chroma[i]);const score=inside/3-outside/9;if(score>bestScore){secondScore=bestScore;bestScore=score;chord=t.name}else if(score>secondScore)secondScore=score}
+if(!chord||bestScore<.055||bestScore-secondScore<.012){micCandidate=null;micCandidateCount=0;return}
 if(chord===micCandidate)micCandidateCount++;else{micCandidate=chord;micCandidateCount=1}
-if(micCandidateCount>=2){micCurrent.textContent="Mulig akkord: "+chord;if(chord!==micConfirmed){micConfirmed=chord;micSeen.set(chord,(micSeen.get(chord)||0)+1);micFound.textContent="Oppdagede akkorder: "+[...micSeen.keys()].join(", ")}}
+if(micCandidateCount>=5){micCurrent.textContent="Mulig akkord: "+chord;if(chord!==micConfirmed){micConfirmed=chord;micSeen.set(chord,(micSeen.get(chord)||0)+1);micFound.textContent="Oppdagede akkorder: "+[...micSeen.keys()].join(", ")}}
 },180);
 }catch(e){micStatus.textContent="Kunne ikke starte mikrofonen: "+e.message;micStream?.getTracks().forEach(t=>t.stop());micStream=null;micContext?.close();micContext=null}
 };
