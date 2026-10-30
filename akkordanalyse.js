@@ -22,7 +22,7 @@ await micContext.resume();
 micSource=micContext.createMediaStreamSource(micStream);
 micProcessor=micContext.createAnalyser();micProcessor.fftSize=8192;micProcessor.smoothingTimeConstant=.65;
 micSource.connect(micProcessor);
-micSeen=new Map();micHistory=[];micStart.disabled=true;micStop.disabled=false;micStatus.textContent="Lytter … spill en akkord i noen sekunder.";
+micSeen=new Map();micHistory=[];micStart.disabled=true;micStop.disabled=false;micStatus.textContent="Lytter … lydmåleren skal bevege seg når du spiller.";
 const samples=new Float32Array(micProcessor.fftSize);
 micTimer=setInterval(()=>{
 if(!micProcessor)return;
@@ -30,8 +30,17 @@ micProcessor.getFloatTimeDomainData(samples);
 const energy=samples.reduce((s,v)=>s+v*v,0)/samples.length;
 const rms=Math.sqrt(energy);const level=Math.min(100,Math.round(rms*500));micMeter.style.width=level+"%";micLevel.textContent="Nivå: "+level+" %";
 if(energy<.000008){micCurrent.textContent="Akkord: – (venter på lyd)";micHistory=[];return}
-const found=analyze(samples,micContext.sampleRate);
-const chord=found.length?found.reduce((best,e)=>!best||e.end-e.start>best.end-best.start?e:best,null).name:null;
+const re=new Float64Array(samples.length),im=new Float64Array(samples.length),chroma=new Float64Array(12);
+for(let i=0;i<samples.length;i++)re[i]=samples[i]*(.5-.5*Math.cos(2*Math.PI*i/(samples.length-1)));
+fft(re,im);
+for(let k=Math.max(1,Math.ceil(75*samples.length/micContext.sampleRate));k<Math.min(samples.length/2,Math.floor(1800*samples.length/micContext.sampleRate));k++){
+const hz=k*micContext.sampleRate/samples.length,pc=((Math.round(69+12*Math.log2(hz/440))%12)+12)%12;
+chroma[pc]+=Math.pow(Math.hypot(re[k],im[k]),.7);
+}
+const total=chroma.reduce((a,b)=>a+b,0);if(!total)return;
+for(let i=0;i<12;i++)chroma[i]/=total;
+let chord=null,bestScore=-Infinity;
+for(const t of templates){let inside=0,outside=0;for(let i=0;i<12;i++)(t.mask[i]?inside+=chroma[i]:outside+=chroma[i]);const score=inside/3-outside/9;if(score>bestScore){bestScore=score;chord=t.name}}
 if(!chord)return;
 micHistory.push(chord);if(micHistory.length>6)micHistory.shift();
 const counts=new Map();for(const c of micHistory)counts.set(c,(counts.get(c)||0)+1);
