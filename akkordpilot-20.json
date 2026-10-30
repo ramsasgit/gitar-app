@@ -1,0 +1,146 @@
+{
+  "description": "Pilot for chord source verification. No third-party chord transcriptions stored or imported.",
+  "status": "awaiting_source_permission_and_manual_verification",
+  "songs": [
+    {
+      "title": "God & Satan",
+      "artist": "Biffy Clyro",
+      "sourceStatus": "previously_identified_unverified",
+      "chords": [],
+      "difficulty": null
+    },
+    {
+      "title": "Candy",
+      "artist": "Paolo Nutini",
+      "sourceStatus": "previously_identified_unverified",
+      "chords": [],
+      "difficulty": null
+    },
+    {
+      "title": "Another Love",
+      "artist": "Tom Odell",
+      "sourceStatus": "previously_identified_unverified",
+      "chords": [],
+      "difficulty": null
+    },
+    {
+      "title": "The Night We Met",
+      "artist": "Lord Huron",
+      "sourceStatus": "previously_identified_unverified",
+      "chords": [],
+      "difficulty": null
+    },
+    {
+      "title": "How Low",
+      "artist": "José González",
+      "sourceStatus": "previously_identified_unverified",
+      "chords": [],
+      "difficulty": null
+    },
+    {
+      "title": "Sloom",
+      "artist": "Of Monsters and Men",
+      "sourceStatus": "previously_identified_unverified",
+      "chords": [],
+      "difficulty": null
+    },
+    {
+      "title": "I Will Follow You into the Dark",
+      "artist": "Death Cab for Cutie",
+      "sourceStatus": "previously_identified_unverified",
+      "chords": [],
+      "difficulty": null
+    },
+    {
+      "title": "Spanish Radio",
+      "artist": "Biffy Clyro",
+      "sourceStatus": "not_checked",
+      "chords": [],
+      "difficulty": null
+    },
+    {
+      "title": "Chalk Outlines",
+      "artist": "Ren, CHINCHILLA",
+      "sourceStatus": "not_checked",
+      "chords": [],
+      "difficulty": null
+    },
+    {
+      "title": "Time of the Season",
+      "artist": "The Zombies",
+      "sourceStatus": "not_checked",
+      "chords": [],
+      "difficulty": null
+    },
+    {
+      "title": "Long Distance Man",
+      "artist": "Bigbang",
+      "sourceStatus": "not_checked",
+      "chords": [],
+      "difficulty": null
+    },
+    {
+      "title": "Cigarette Duet",
+      "artist": "Princess Chelsea",
+      "sourceStatus": "not_checked",
+      "chords": [],
+      "difficulty": null
+    },
+    {
+      "title": "The Silence",
+      "artist": "Manchester Orchestra",
+      "sourceStatus": "not_checked",
+      "chords": [],
+      "difficulty": null
+    },
+    {
+      "title": "Amsterdam",
+      "artist": "Nothing But Thieves",
+      "sourceStatus": "not_checked",
+      "chords": [],
+      "difficulty": null
+    },
+    {
+      "title": "Wild God",
+      "artist": "Nick Cave & The Bad Seeds",
+      "sourceStatus": "not_checked",
+      "chords": [],
+      "difficulty": null
+    },
+    {
+      "title": "Texas Sun",
+      "artist": "Khruangbin, Leon Bridges",
+      "sourceStatus": "not_checked",
+      "chords": [],
+      "difficulty": null
+    },
+    {
+      "title": "Seventeen",
+      "artist": "Sharon Van Etten",
+      "sourceStatus": "not_checked",
+      "chords": [],
+      "difficulty": null
+    },
+    {
+      "title": "Better Man",
+      "artist": "Paolo Nutini",
+      "sourceStatus": "not_checked",
+      "chords": [],
+      "difficulty": null
+    },
+    {
+      "title": "Something In The Way",
+      "artist": "Nirvana",
+      "sourceStatus": "not_checked",
+      "chords": [],
+      "difficulty": null
+    },
+    {
+      "title": "Patience",
+      "artist": "Chris Cornell",
+      "sourceStatus": "not_checked",
+      "chords": [],
+      "difficulty": null
+    }
+  ]
+}
