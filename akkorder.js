@@ -2,7 +2,15 @@
 const akkordData = {
     "Space Oddity": ["C", "Em", "Am", "D", "G"],
     "Ziggy Stardust": ["G", "D", "C", "Am"],
-    "The Man Who Sold The World": ["Am", "D", "C", "G"]
+    "The Man Who Sold The World": ["Am", "D", "C", "G"],
+    // Foreløpige testakkorder – må kvalitetssikres mot lovlige kilder.
+    "God & Satan": ["G", "C", "D", "Em"],
+    "Candy": ["G", "D", "Am", "Em"],
+    "Another Love": ["Em", "Bm", "C", "G"],
+    "The Night We Met": ["D", "F#m", "A", "E"],
+    "How Low": ["F", "Eb", "Bb", "Dbmaj7"],
+    "Sloom": ["Db", "Bbm", "Gb"],
+    "I Will Follow You into the Dark": ["F", "C", "Dm", "Bb"]
 };
 
 
