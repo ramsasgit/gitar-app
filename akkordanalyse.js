@@ -12,7 +12,7 @@ const events=[];for(let i=0;i<smooth.length;i++){const name=smooth[i];if(!name)c
 btn.onclick=async()=>{btn.disabled=true;results.hidden=true;status.textContent="Leser og analyserer lydfilen …";try{const audioContext=new (window.AudioContext||window.webkitAudioContext)();const buffer=await audioContext.decodeAudioData(await file.files[0].arrayBuffer());const maxSeconds=180,limit=Math.min(buffer.length,Math.floor(buffer.sampleRate*maxSeconds));const mono=new Float32Array(limit);for(let c=0;c<buffer.numberOfChannels;c++){const channel=buffer.getChannelData(c);for(let i=0;i<limit;i++)mono[i]+=channel[i]/buffer.numberOfChannels}const events=analyze(mono,buffer.sampleRate);await audioContext.close();const host=$("events");host.replaceChildren();for(const e of events){const row=document.createElement("div");row.className="event";const time=document.createElement("time");time.textContent=e.start.toFixed(1)+"–"+e.end.toFixed(1)+" s";const name=document.createElement("strong");name.textContent=e.name;row.append(time,name);host.append(row)}const unique=[...new Set(events.map(e=>e.name))];$("summary").textContent=events.length?"Fant "+events.length+" segmenter. Akkorder: "+unique.join(", "):"Ingen tydelige akkorder funnet.";status.textContent="Analyse ferdig"+(buffer.duration>maxSeconds?" (kun første 3 minutter).":".");results.hidden=false}catch(err){status.textContent="Kunne ikke analysere filen: "+err.message}finally{btn.disabled=!file.files.length}};
 let micStream=null,micContext=null,micSource=null,micProcessor=null,micTimer=null,micSilentGain=null;
 const micStart=$("mic-start"),micStop=$("mic-stop"),micStatus=$("mic-status"),micCurrent=$("mic-current"),micFound=$("mic-found"),micMeter=$("mic-meter"),micLevel=$("mic-level");
-let micSeen=new Map(),micHistory=[];
+let micSeen=new Map(),micHistory=[],micCandidate=null,micCandidateCount=0,micConfirmed=null;
 micStart.onclick=async()=>{
 try{
 if(!navigator.mediaDevices?.getUserMedia)throw Error("Mikrofon krever HTTPS og en nettleser som støtter opptak.");
@@ -24,7 +24,7 @@ micProcessor=micContext.createAnalyser();micProcessor.fftSize=8192;micProcessor.
 micSource.connect(micProcessor);
 // Hold lydgrafen aktiv uten å sende mikrofonlyd til høyttalerne.
 micSilentGain=micContext.createGain();micSilentGain.gain.value=0;micProcessor.connect(micSilentGain);micSilentGain.connect(micContext.destination);
-micSeen=new Map();micHistory=[];micStart.disabled=true;micStop.disabled=false;micStatus.textContent="Lytter … lydmåleren skal bevege seg når du spiller.";
+micSeen=new Map();micHistory=[];micCandidate=null;micCandidateCount=0;micConfirmed=null;micFound.textContent="Oppdagede akkorder: –";micStart.disabled=true;micStop.disabled=false;micStatus.textContent="Lytter … lydmåleren skal bevege seg når du spiller.";
 const samples=new Float32Array(micProcessor.fftSize);
 micTimer=setInterval(()=>{
 if(!micProcessor)return;
@@ -34,7 +34,7 @@ const rms=Math.sqrt(energy);const level=Math.min(100,Math.round(rms*2500));micMe
 if(micContext.state!=="running"){micStatus.textContent="Lydmotoren er "+micContext.state+". Trykk Stopp og Start igjen.";return}
 if(micStream.getAudioTracks()[0]?.muted){micStatus.textContent="Mikrofonsporet er dempet av nettleseren eller operativsystemet.";return}
 micStatus.textContent=rms<.0005?"Mikrofon tilkoblet, men nesten ingen lyd registreres. Sjekk valgt mikrofon i Chrome.":"Mikrofonen mottar lyd – analyserer akkorder.";
-if(energy<.00000025){micCurrent.textContent="Akkord: – (venter på lyd)";micHistory=[];return}
+if(energy<.00000025){micCurrent.textContent="Akkord: – (venter på lyd)";micHistory=[];micCandidate=null;micCandidateCount=0;return}
 const re=new Float64Array(samples.length),im=new Float64Array(samples.length),chroma=new Float64Array(12);
 for(let i=0;i<samples.length;i++)re[i]=samples[i]*(.5-.5*Math.cos(2*Math.PI*i/(samples.length-1)));
 fft(re,im);
@@ -47,11 +47,9 @@ for(let i=0;i<12;i++)chroma[i]/=total;
 let chord=null,bestScore=-Infinity;
 for(const t of templates){let inside=0,outside=0;for(let i=0;i<12;i++)(t.mask[i]?inside+=chroma[i]:outside+=chroma[i]);const score=inside/3-outside/9;if(score>bestScore){bestScore=score;chord=t.name}}
 if(!chord)return;
-micHistory.push(chord);if(micHistory.length>6)micHistory.shift();
-const counts=new Map();for(const c of micHistory)counts.set(c,(counts.get(c)||0)+1);
-const winner=[...counts].sort((x,y)=>y[1]-x[1])[0];
-if(winner&&winner[1]>=3){micCurrent.textContent="Mulig akkord: "+winner[0];micSeen.set(winner[0],(micSeen.get(winner[0])||0)+1);micFound.textContent="Oppdagede akkorder: "+[...micSeen.keys()].join(", ")}
-},650);
+if(chord===micCandidate)micCandidateCount++;else{micCandidate=chord;micCandidateCount=1}
+if(micCandidateCount>=2){micCurrent.textContent="Mulig akkord: "+chord;if(chord!==micConfirmed){micConfirmed=chord;micSeen.set(chord,(micSeen.get(chord)||0)+1);micFound.textContent="Oppdagede akkorder: "+[...micSeen.keys()].join(", ")}}
+},180);
 }catch(e){micStatus.textContent="Kunne ikke starte mikrofonen: "+e.message;micStream?.getTracks().forEach(t=>t.stop());micStream=null;micContext?.close();micContext=null}
 };
 micStop.onclick=()=>{clearInterval(micTimer);micTimer=null;micSource?.disconnect();micProcessor?.disconnect();micSilentGain?.disconnect();micSilentGain=null;micStream?.getTracks().forEach(t=>t.stop());micContext?.close();micStream=null;micSource=null;micProcessor=null;micContext=null;micStart.disabled=false;micStop.disabled=true;micStatus.textContent="Mikrofonen er stoppet.";micMeter.style.width="0%";micLevel.textContent="Nivå: 0 %";};
