@@ -225,3 +225,8 @@ body{max-width:1280px;padding:34px 30px}
 .instrument-picker{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:16px 0 24px;padding:14px 18px;background:#1b222c;border:1px solid #303946;border-radius:14px}.instrument-picker label{cursor:pointer}.instrument-picker input{accent-color:#48e58b}.instrument-picker #instrument-info{color:#b6beca;font-size:13px}.diagram-section{margin-top:10px}.diagram-section summary{color:#48e58b;cursor:pointer}.diagram-grid{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}.chord-diagram{width:125px;padding:8px;border:1px solid #3c4a55;border-radius:10px;background:#202630}.chord-diagram svg{display:block;width:100%;height:auto}.diagram-grid p{width:100%}
 
 .instrument-picker{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px;margin:16px 0;border:1px solid #394350;border-radius:12px;background:#1b222c}.instrument-picker input{accent-color:#48e58b}.instrument-picker label{cursor:pointer}.instrument-picker span:last-child{color:#b6beca}.chord-diagrams{margin-top:12px}.chord-diagrams summary{cursor:pointer;color:#48e58b}.chord-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.chord-diagram{width:130px;padding:8px;border-radius:10px;border:1px solid #394350;background:#202630}.chord-diagram svg{display:block;width:100%}
+
+/* Compact controls inside the Choose your riff dropdown */
+.action-dropdown .action-dropdown-items #sok-lat{display:block;width:100%;height:44px;min-height:44px;max-height:44px;flex:none;min-width:0;margin:0!important;padding:10px 12px!important;line-height:22px;}
+.action-dropdown .action-dropdown-items #filter-nivaa{display:block;width:100%;min-height:44px;margin:0;}
+.action-dropdown .action-dropdown-items button{margin:0;}
