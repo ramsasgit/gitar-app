@@ -74,25 +74,27 @@ function makeChordEditor(song) {
   details.className = "chord-editor";
   const summary = document.createElement("summary");
   const saved = chordsForSong(song);
-  summary.textContent = saved.length ? "Akkorder: " + saved.join(", ") + " · Endre" : "+ Lim inn akkorder";
+  summary.textContent = saved.length ? "Chords: " + saved.join(", ") + " · Edit" : "+ Paste chords";
   const textarea = document.createElement("textarea");
   textarea.rows = 5;
-  textarea.placeholder = "Lim inn akkordlinjer, f.eks. Am  C  G  D, eller tekst med [Am] og [C].";
+  textarea.placeholder = "Paste chord lines, e.g. Am  C  G  D, or text containing [Am] and [C].";
   textarea.value = saved.join(" ");
-  textarea.setAttribute("aria-label", "Lim inn akkorder for " + song.title);
+  textarea.setAttribute("aria-label", "Paste chords for " + song.title);
   const result = document.createElement("p");
   result.className = "chord-feedback";
   const save = document.createElement("button");
   save.type = "button";
-  save.textContent = "Finn og lagre akkorder";
+  save.textContent = "Analyze and save chords";
   save.onclick = () => {
     const chords = parsePastedChords(textarea.value);
-    if (!chords.length) { result.textContent = "Fant ingen sikre akkorder. Lim inn akkordlinjer eller akkorder i hakeparenteser."; return; }
+    if (!chords.length) { result.textContent = "No reliable chords detected. Paste chord-only lines or chords in square brackets."; return; }
     localStorage.setItem(chordStorageKey(song), chords.join(","));
-    summary.textContent = "Akkorder: " + chords.join(", ") + " · Endre";
-    result.textContent = chords.every(chord => allowedBeginnerChords.has(chord))
-      ? "✓ " + chords.join(", ") + " – passer dine ni nybegynnerakkorder."
-      : chords.join(", ") + " – inneholder også akkorder utenfor de ni nybegynnerakkordene.";
+    summary.textContent = "Chords: " + chords.join(", ") + " · Edit";
+    const outside = chords.filter(chord => !allowedBeginnerChords.has(chord));
+    result.textContent = outside.length === 0
+      ? "✓ Beginner-friendly: all " + chords.length + " detected chords are among your nine practice chords (" + chords.join(", ") + ")."
+      : "Not yet beginner-friendly. " + outside.length + " chord(s) outside your nine: " + outside.join(", ") + ". Detected: " + chords.join(", ") + ".";
+    result.setAttribute("role", "status");
     renderPracticeSongs();
   };
   details.append(summary, textarea, save, result);
